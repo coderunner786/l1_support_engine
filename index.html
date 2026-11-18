@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>L1 Support Engine</title>
+  <style>
+    :root {
+      --bg: #09090b;
+      --surface: #111113;
+      --surface-2: #18181b;
+      --border: #27272a;
+      --border-hover: #52525b;
+      --text: #fafafa;
+      --muted: #a1a1aa;
+      --dim: #71717a;
+      --green: #22c55e;
+      --amber: #eab308;
+      --red: #ef4444;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 2.25rem 1.25rem 4rem;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      padding-bottom: 1.4rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 1.5rem;
+    }
+    .header h1 {
+      font-size: 1.45rem;
+      font-weight: 600;
+      letter-spacing: -0.025em;
+    }
+    .header p {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-top: 0.2rem;
+    }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.3rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+
+    /* Metrics */
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    .metric-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.95rem 1.1rem;
+    }
+    .metric-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--dim);
+      font-weight: 600;
+    }
+    .metric-val {
+      font-size: 1.5rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin-top: 0.2rem;
+    }
+
+    /* Controls */
+    .controls {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 1.5rem;
+      align-items: end;
+    }
+    .field label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-bottom: 0.45rem;
+      font-weight: 500;
+    }
+    select, input[type="text"] {
+      width: 100%;
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.6rem 0.85rem;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    select:focus, input[type="text"]:focus {
+      border-color: var(--text);
+    }
+    input[type="range"] {
+      width: 100%;
+      accent-color: #fafafa;
+      cursor: pointer;
+    }
+
+    /* Prominent Mode Switcher */
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+    .tab-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.2rem;
+      background: var(--surface);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      padding: 0.95rem 1.2rem;
+      border-radius: 12px;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.18s ease;
+    }
+    .tab-btn:hover {
+      border-color: var(--border-hover);
+      background: var(--surface-2);
+      color: var(--text);
+    }
+    .tab-btn .tab-title {
+      font-size: 0.98rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .tab-btn .tab-sub {
+      font-size: 0.78rem;
+      color: var(--dim);
+    }
+    .tab-btn.active {
+      background: #fafafa;
+      color: #09090b;
+      border-color: #fafafa;
+      box-shadow: 0 0 0 2px rgba(250, 250, 250, 0.18), 0 8px 24px rgba(0, 0, 0, 0.45);
+    }
+    .tab-btn.active .tab-sub {
+      color: #52525b;
+    }
+    .tab-badge {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      background: var(--surface-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .tab-btn.active .tab-badge {
+      background: #09090b;
+      color: #fafafa;
+      border-color: #09090b;
+    }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* Main Panel */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.4rem;
+    }
+
+    .quick-prompts {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    .chip {
+      background: var(--bg);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.35rem 0.75rem;
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .chip:hover {
+      border-color: var(--border-hover);
+      color: var(--text);
+    }
+
+    .search-row {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+    .search-row input { flex: 1; min-width: 240px; }
+
+    .btn-primary {
+      background: #fafafa;
+      color: #09090b;
+      border: 1px solid #fafafa;
+      border-radius: 8px;
+      padding: 0.65rem 1.3rem;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-primary:hover { opacity: 0.88; }
+    .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* Pills */
+    .pill-row {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin: 1.25rem 0 1rem;
+    }
+    .pill {
+      padding: 0.22rem 0.65rem;
+      border-radius: 6px;
+      font-size: 0.74rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .pill-green { color: var(--green); border-color: rgba(34, 197, 94, 0.3); }
+    .pill-amber { color: var(--amber); border-color: rgba(234, 179, 8, 0.3); }
+    .pill-red   { color: var(--red);   border-color: rgba(239, 68, 68, 0.3); }
+
+    .sanitized-box {
+      background: var(--bg);
+      border: 1px solid rgba(234, 179, 8, 0.35);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.82rem;
+      color: var(--amber);
+      margin-bottom: 1rem;
+    }
+
+    /* Chunks */
+    .chunk-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.15rem;
+      margin-bottom: 0.75rem;
+    }
+    .chunk-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+    .chunk-meta code {
+      color: var(--text);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .chunk-text {
+      font-size: 0.9rem;
+      color: #d4d4d8;
+      line-height: 1.6;
+    }
+
+    .bar-track {
+      height: 4px;
+      background: var(--surface-2);
+      border-radius: 999px;
+      margin-top: 0.75rem;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      background: #fafafa;
+      border-radius: 999px;
+      transition: width 0.2s ease;
+    }
+
+    .fallback-box {
+      background: rgba(239, 68, 68, 0.08);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #fca5a5;
+      border-radius: 8px;
+      padding: 0.9rem 1.1rem;
+      font-size: 0.9rem;
+    }
+
+    .progress-wrap { margin: 1.25rem 0; display: none; }
+    .progress-label { font-size: 0.82rem; color: var(--muted); margin-bottom: 0.45rem; }
+
+    @media (max-width: 640px) {
+      .tabs { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <h1>L1 Support Engine</h1>
+        <p>Multi-Tenant RAG • PostgreSQL pgvector (HNSW) • Async FastAPI • PII Guardrails</p>
+      </div>
+      <div class="status-badge"><span class="dot"></span> API Online</div>
+    </div>
+
+    <div class="metrics">
+      <div class="metric-card">
+        <div class="metric-label">Session Queries</div>
+        <div class="metric-val" id="m-total">0</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Avg Latency</div>
+        <div class="metric-val" id="m-lat">0.0 ms</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">PII Redactions</div>
+        <div class="metric-val" id="m-pii">0</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Fallback Rate</div>
+        <div class="metric-val" id="m-fb">0%</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="field">
+        <label for="tenant">Tenant</label>
+        <select id="tenant">
+          <option value="zara">ZARA</option>
+          <option value="nike">NIKE</option>
+          <option value="amazon">AMAZON</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="topk">Top-K Chunks <span id="topk-val">3</span></label>
+        <input type="range" id="topk" min="1" max="5" value="3" />
+      </div>
+      <div class="field">
+        <label for="minsim">Confidence Threshold <span id="minsim-val">0.35</span></label>
+        <input type="range" id="minsim" min="0" max="1" step="0.05" value="0.35" />
+      </div>
+    </div>
+
+    <!-- Prominent Mode Switcher: Load Simulator First, Live Query Second -->
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="sim">
+        <span class="tab-title">⚡ Load Simulator <span class="tab-badge">1,000 reqs</span></span>
+        <span class="tab-sub">Stress test 25 concurrent async workers across all tenants</span>
+      </button>
+      <button class="tab-btn" data-tab="query">
+        <span class="tab-title">🔍 Live Query <span class="tab-badge">Interactive</span></span>
+        <span class="tab-sub">Test single customer inquiries, PII masking, and fallbacks</span>
+      </button>
+    </div>
+
+    <!-- Tab 1 (Default): Load Simulator -->
+    <div id="tab-sim" class="tab-panel active panel">
+      <p style="color: var(--muted); font-size: 0.88rem; margin-bottom: 1.1rem;">
+        Fires 1,000 concurrent requests across Zara, Nike, and Amazon using 25 async workers to measure throughput, P95 latency, PII masking, and fallback guardrails.
+      </p>
+      <button class="btn-primary" id="sim-btn" onclick="runSimulation()">
+        Run 1,000-Request Simulation (25 Workers)
+      </button>
+
+      <div class="progress-wrap" id="sim-progress-wrap">
+        <div class="progress-label" id="sim-progress-text">Starting...</div>
+        <div class="bar-track" style="height: 6px;">
+          <div class="bar-fill" id="sim-progress-bar" style="width: 0%;"></div>
+        </div>
+      </div>
+
+      <div id="sim-results"></div>
+    </div>
+
+    <!-- Tab 2: Live Query -->
+    <div id="tab-query" class="tab-panel panel">
+      <div class="quick-prompts">
+        <button class="chip" onclick="setPrompt('What is the standard return window and refund timeline?')">Return Window</button>
+        <button class="chip" onclick="setPrompt('My email is jatin@test.com and phone 9876543210, how do I claim a damaged item?')">Test PII Masking</button>
+        <button class="chip" onclick="setPrompt('Who won the FIFA World Cup?')">Test Fallback</button>
+      </div>
+
+      <div class="search-row">
+        <input type="text" id="query-input" placeholder="Ask a customer support question..." />
+        <button class="btn-primary" id="run-btn" onclick="runQuery()">Run Query</button>
+      </div>
+
+      <div id="query-results"></div>
+    </div>
+  </div>
+
+  <script>
+    const TENANTS = ["zara", "nike", "amazon"];
+    const SAMPLE_QUERIES = [
+      "What is the return policy?",
+      "How long do refunds take?",
+      "My item arrived damaged, what do I do?",
+      "My email is test@example.com and phone is 9876543210, help me with shipping.",
+      "Can I return items after 30 days?",
+      "Who won the FIFA World Cup?"
+    ];
+
+    const state = { total: 0, latSum: 0, pii: 0, fallbacks: 0 };
+
+    document.getElementById("topk").addEventListener("input", e => {
+      document.getElementById("topk-val").textContent = e.target.value;
+    });
+    document.getElementById("minsim").addEventListener("input", e => {
+      document.getElementById("minsim-val").textContent = Number(e.target.value).toFixed(2);
+    });
+
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab-btn, .tab-panel").forEach(el => el.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
+      });
+    });
+
+    document.getElementById("query-input").addEventListener("keydown", e => {
+      if (e.key === "Enter") runQuery();
+    });
+
+    function setPrompt(text) {
+      document.getElementById("query-input").value = text;
+      runQuery();
+    }
+
+    function updateMetrics() {
+      document.getElementById("m-total").textContent = state.total;
+      document.getElementById("m-lat").textContent = state.total ? (state.latSum / state.total).toFixed(1) + " ms" : "0.0 ms";
+      document.getElementById("m-pii").textContent = state.pii;
+      document.getElementById("m-fb").textContent = state.total ? Math.round((state.fallbacks / state.total) * 100) + "%" : "0%";
+    }
+
+    async function runQuery() {
+      const query = document.getElementById("query-input").value.trim();
+      if (!query) return;
+
+      const tenant_id = document.getElementById("tenant").value;
+      const top_k = parseInt(document.getElementById("topk").value, 10);
+      const min_similarity = parseFloat(document.getElementById("minsim").value);
+      const btn = document.getElementById("run-btn");
+      const out = document.getElementById("query-results");
+
+      btn.disabled = true;
+      btn.textContent = "Querying...";
+
+      const t0 = performance.now();
+      try {
+        const res = await fetch("/support/query", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tenant_id, query, top_k, min_similarity })
+        });
+        const ms = performance.now() - t0;
+        const data = await res.json();
+
+        const status = data.status || "matched";
+        const piiMasked = data.masked_query && data.masked_query !== query;
+
+        state.total++;
+        state.latSum += ms;
+        if (piiMasked) state.pii++;
+        if (status === "fallback") state.fallbacks++;
+        updateMetrics();
+
+        let html = `
+          <div class="pill-row">
+            <span class="pill ${status === "matched" ? "pill-green" : "pill-red"}">${status.toUpperCase()}</span>
+            <span class="pill ${piiMasked ? "pill-amber" : "pill-green"}">${piiMasked ? "PII REDACTED" : "PII CLEAN"}</span>
+            <span class="pill">${ms.toFixed(1)} ms</span>
+            <span class="pill">${tenant_id.toUpperCase()}</span>
+          </div>
+        `;
+
+        if (piiMasked) {
+          html += `<div class="sanitized-box">Sanitized: ${escapeHtml(data.masked_query)}</div>`;
+        }
+
+        if (status === "fallback") {
+          html += `<div class="fallback-box">${escapeHtml(data.message)}</div>`;
+        } else {
+          data.matches.forEach((m, i) => {
+            const pct = Math.max(0, Math.min(100, m.similarity_score * 100)).toFixed(1);
+            html += `
+              <div class="chunk-card">
+                <div class="chunk-meta">
+                  <span>Match #${i + 1} • <code>${escapeHtml(m.source_file)}</code></span>
+                  <span>Score: <strong>${m.similarity_score.toFixed(4)}</strong></span>
+                </div>
+                <div class="chunk-text">${escapeHtml(m.content)}</div>
+                <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+              </div>
+            `;
+          });
+        }
+        out.innerHTML = html;
+      } catch (err) {
+        out.innerHTML = `<div class="fallback-box" style="margin-top:1rem;">Request failed: ${escapeHtml(err.message)}</div>`;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Run Query";
+      }
+    }
+
+    async function runSimulation() {
+      const TOTAL = 1000;
+      const WORKERS = 25;
+      const top_k = parseInt(document.getElementById("topk").value, 10);
+      const min_similarity = parseFloat(document.getElementById("minsim").value);
+
+      const btn = document.getElementById("sim-btn");
+      const wrap = document.getElementById("sim-progress-wrap");
+      const bar = document.getElementById("sim-progress-bar");
+      const label = document.getElementById("sim-progress-text");
+      const out = document.getElementById("sim-results");
+
+      btn.disabled = true;
+      wrap.style.display = "block";
+      out.innerHTML = "";
+
+      let nextId = 0, completed = 0, ok = 0, piiCount = 0, fbCount = 0;
+      const latencies = [];
+      const tc = { zara: 0, nike: 0, amazon: 0 };
+      const startAll = performance.now();
+
+      async function worker() {
+        while (nextId < TOTAL) {
+          const id = nextId++;
+          const tenant_id = TENANTS[id % 3];
+          const query = SAMPLE_QUERIES[id % 6];
+          const t0 = performance.now();
+          try {
+            const res = await fetch("/support/query", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ tenant_id, query, top_k, min_similarity })
+            });
+            const ms = performance.now() - t0;
+            if (res.ok) {
+              const body = await res.json();
+              ok++;
+              latencies.push(ms);
+              tc[tenant_id]++;
+              if (body.status === "fallback") fbCount++;
+              if (body.masked_query && body.masked_query !== query) piiCount++;
+            }
+          } catch (_) {}
+
+          completed++;
+          if (completed % 50 === 0 || completed === TOTAL) {
+            const pct = (completed / TOTAL) * 100;
+            bar.style.width = pct + "%";
+            label.textContent = `Processed ${completed} / ${TOTAL} requests...`;
+          }
+        }
+      }
+
+      await Promise.all(Array.from({ length: WORKERS }, () => worker()));
+      const elapsed = (performance.now() - startAll) / 1000;
+
+      latencies.sort((a, b) => a - b);
+      const avg = latencies.length ? latencies.reduce((a, b) => a + b, 0) / latencies.length : 0;
+      const p95 = latencies.length ? latencies[Math.floor(latencies.length * 0.95) - 1] || latencies[latencies.length - 1] : 0;
+      const rps = ok / elapsed;
+
+      out.innerHTML = `
+        <div class="metrics" style="margin-top:1.25rem;">
+          <div class="metric-card"><div class="metric-label">Total Time</div><div class="metric-val">${elapsed.toFixed(2)}s</div></div>
+          <div class="metric-card"><div class="metric-label">Throughput</div><div class="metric-val">${rps.toFixed(1)} req/s</div></div>
+          <div class="metric-card"><div class="metric-label">Avg Latency</div><div class="metric-val">${avg.toFixed(1)} ms</div></div>
+          <div class="metric-card"><div class="metric-label">P95 Latency</div><div class="metric-val">${p95.toFixed(1)} ms</div></div>
+        </div>
+        <div class="pill-row">
+          <span class="pill pill-green">Success: ${((ok / TOTAL) * 100).toFixed(1)}%</span>
+          <span class="pill pill-amber">PII Masked: ${piiCount}</span>
+          <span class="pill pill-red">Fallbacks: ${fbCount}</span>
+          <span class="pill">Zara: ${tc.zara}</span>
+          <span class="pill">Nike: ${tc.nike}</span>
+          <span class="pill">Amazon: ${tc.amazon}</span>
+        </div>
+      `;
+
+      btn.disabled = false;
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>"']/g, s => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[s]));
+    }
+  </script>
+</body>
+</html>
