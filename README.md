@@ -1,5 +1,14 @@
 # Enterprise L1 Support Engine
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Render-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://l1-support-engine.onrender.com)
+
+## Live Demo
+
+Try the deployed multi-tenant RAG gateway here: **[https://l1-support-engine.onrender.com](https://l1-support-engine.onrender.com)**
+
+* **Policy Lookup & PII Guardrail:** Select a tenant (`Zara`, `Nike`, or `Amazon`) and submit a policy question—include dummy PII (like an email or phone number) to see the redaction layer in action.
+* **Concurrency Test:** Run the built-in Load Simulator to fire concurrent async requests against Neon `pgvector`.
+
 A high-concurrency, multi-tenant **Retrieval-Augmented Generation (RAG)** gateway built with **Async FastAPI**, **PostgreSQL (`pgvector` + HNSW)**, and **SentenceTransformers**. Designed to automate Tier-1 customer support across multiple brands from a single low-latency service.
 
 ---
